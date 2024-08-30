@@ -1,12 +1,7 @@
 #!/bin/bash
 
-# Stop jobs
-sudo systemctl stop backup1.timer
-sudo systemctl stop backup1.service
-
-# Disable jobs
-sudo systemctl disable backup1.timer
-sudo systemctl disable backup1.service
+# Stop job 1
+sudo ./stop1.sh
 
 # Copy local backup jobs to systemd
 sudo cp backup1.service /etc/systemd/system/backup1.service
@@ -25,13 +20,8 @@ sudo systemctl daemon-reload
 
 ### REPEAT FOR BACKUP 2 ###
 
-# Stop jobs
-sudo systemctl stop backup2.timer
-sudo systemctl stop backup2.service
-
-# Disable jobs
-sudo systemctl disable backup2.timer
-sudo systemctl disable backup2.service
+# Stop job 2
+sudo ./stop2.sh
 
 # Copy local backup jobs to systemd
 sudo cp backup2.service /etc/systemd/system/backup2.service
