@@ -1,1 +1,9 @@
-# This sets the timer options for the backup job from `source` to `destionation2` for the `backup.service` systemd service file.
+[Unit]
+Description=Run backup service every minute
+
+[Timer]
+OnCalendar=*-*-* *:*:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

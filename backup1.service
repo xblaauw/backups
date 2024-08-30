@@ -1,2 +1,14 @@
-# This file programs a systemd service, which is renamed to a logical name and placed in the appropriate directory by `setup.sh`
-# This job runs addversion.sh and defines a schedule and all other variable information required to make this project work.
+[Unit]
+Description=Incremental Backup Service
+After=network.target
+
+[Service]
+Type=simple
+Environment="SOURCE_DIR=/home/xander/projects/backups/source"
+Environment="BACKUP_DIR=/home/xander/projects/backups/target1"
+ExecStart=/bin/bash /home/xander/projects/backups/backup_script.sh
+User=xander
+Group=xander
+
+[Install]
+WantedBy=multi-user.target
