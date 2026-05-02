@@ -64,16 +64,30 @@ This folder contains everything needed to set up and maintain:
 
 ## Quick Start
 
+### Recommended: Use Claude Code
+
+**The easiest way to set this up:** Open [Claude Code](https://claude.com/claude-code) with this repository, and let Claude guide you through the process step-by-step. Claude will:
+- Ask clarifying questions about your setup
+- Guide you through each step
+- Verify each command worked before proceeding
+- Help troubleshoot if anything goes wrong
+
+Simply share this repo with Claude Code and describe what you want to set up.
+
+### Manual Setup (Alternative)
+
+If you prefer to follow written guides instead:
+
 **Choose your task:**
 
-### I'm Setting Up My Own External HDD
+#### I'm Setting Up My Own External HDD
 - Read: `disk-mounting/setup-admin.md`
 - Test after setup: `disk-mounting/user-access-test.md`
 
-### I'm Setting Up Someone Else's Disk
+#### I'm Setting Up Someone Else's Disk
 - Read: `disk-mounting/setup-for-user.md`
 
-### I Want Automated Health Monitoring
+#### I Want Automated Health Monitoring
 - Read: `smart-monitoring/setup.md`
 - Run: `bash smart-monitoring/scripts/register.sh`
 
