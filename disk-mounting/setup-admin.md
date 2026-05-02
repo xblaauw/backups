@@ -125,7 +125,7 @@ sudo nano /etc/fstab
 Add this line (replace the UUID with your actual UUID and `<target-user>` with the target user's username):
 
 ```
-UUID=<your-disk-uuid>  /media/<target-user>  ext4  noauto,x-systemd.automount,x-systemd.device-timeout=5,nofail,errors=remount-ro,noatime  0  0
+UUID=<your-disk-uuid>  /media/<target-user>  ext4  noauto,x-systemd.automount,x-systemd.device-timeout=5,nofail,errors=remount-ro,noatime,sync  0  0
 ```
 
 **Option Explanations:**
@@ -139,6 +139,7 @@ UUID=<your-disk-uuid>  /media/<target-user>  ext4  noauto,x-systemd.automount,x-
 | `nofail` | Boot succeeds even if disk is not plugged in |
 | `errors=remount-ro` | On filesystem errors, go read-only (prevents corruption) |
 | `noatime` | Skip access-time updates (reduces writes, safer for sudden disconnects) |
+| `sync` | Force immediate writes to disk (protects against data loss if suddenly disconnected) |
 
 Save and exit the editor.
 
@@ -334,7 +335,7 @@ This setup handles:
 If you want the disk to mount automatically at boot (assuming it's connected), change the fstab line to:
 
 ```
-UUID=<your-disk-uuid>  /media/<target-user>  ext4  auto,nofail,x-systemd.device-timeout=5,errors=remount-ro,noatime  0  0
+UUID=<your-disk-uuid>  /media/<target-user>  ext4  auto,nofail,x-systemd.device-timeout=5,errors=remount-ro,noatime,sync  0  0
 ```
 
 Replace `<your-disk-uuid>` with your actual disk UUID and `<target-user>` with the target user's username.
