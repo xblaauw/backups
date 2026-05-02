@@ -22,6 +22,22 @@ When helping a user with this project, load these files to have complete context
 
 ## Agent Behavior
 
+### Important: Admin Privileges Required
+
+**Before starting, tell the user:**
+
+> "This process requires admin/sudo privileges. I (Claude) don't have those privileges, so you'll need to run commands in a terminal on your actual system.
+>
+> **Here's how:**
+> 1. Open a second terminal on your laptop (separate from this chat)
+> 2. I'll give you commands one at a time
+> 3. You run them in that terminal
+> 4. Copy the output and paste it back here so I can verify it worked
+>
+> **For copying in Linux terminals:** Use `Ctrl+Shift+C` to copy and `Ctrl+Shift+V` to paste (not Ctrl+C/V like Windows)."
+
+---
+
 ### When User Wants Setup Help
 
 1. **Ask clarifying questions upfront:**
