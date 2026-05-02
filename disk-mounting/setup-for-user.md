@@ -1,35 +1,37 @@
-# Setting Up External HDD for Another User
+# Setting Up Another User's External HDD
 
 **Version:** 1.0  
 **Last Updated:** 2026-05-02
 
 ## Overview
 
-This guide sets up persistent, resilient mounting of Xander's external HDD on your (Jaron's) PC such that:
+This guide sets up persistent, resilient mounting of another user's external HDD on your PC such that:
 - The disk always mounts to the same location regardless of USB port or system state
 - It survives kernel updates, sudden disconnects, power outages, and reboots
-- Only Xander (the non-sudo user) can read/write to the disk
+- Only the target user can read/write to the disk
 - Accidental writes to your internal SSD are prevented if the external disk is missing
 
 **Prerequisites:**
-- You (Jaron) have a sudo account on this PC
-- Xander has a non-sudo account with SSH access
-- Xander's external HDD is formatted with ext4
+- You have a sudo account on this PC (admin)
+- The target user has a non-sudo account with access to this PC
+- The target user's external HDD is formatted with ext4
 - The external HDD is connected during initial setup
 
 ---
 
-## Step 1: Get Xander's UID and GID
+## Step 1: Get the Target User's UID and GID
 
-First, find the user ID of Xander's account. Run this command:
+First, find the user ID of the target user's account. Run this command:
 
 ```bash
-id xander
+id <target-user>
 ```
+
+Replace `<target-user>` with the actual username.
 
 **Expected output example:**
 ```
-uid=1001(xander) gid=1001(xander) groups=1001(xander),100(users)
+uid=1001(<target-user>) gid=1001(<target-user>) groups=1001(<target-user>),100(users)
 ```
 
 **Write down:**
@@ -40,7 +42,7 @@ You'll need these values later.
 
 ---
 
-## Step 2: Identify Xander's External HDD
+## Step 2: Identify the Target User's External HDD
 
 Connect the external HDD to your PC and identify its UUID and device path.
 
@@ -48,60 +50,64 @@ Connect the external HDD to your PC and identify its UUID and device path.
 lsblk -o NAME,SIZE,FSTYPE,UUID,LABEL
 ```
 
-Look for Xander's disk (typically `sdc`, `sdd`, `sde`, etc., depending on how many internal/external drives are already connected).
+Look for the disk (typically `sdc`, `sdd`, `sde`, etc., depending on how many internal/external drives are already connected).
 
 **Save these values:**
 - **Device path**: e.g., `/dev/sdc1`
-- **UUID**: e.g., `a1b2c3d4-e5f6-7890-abcd-ef1234567890` (yours will be different)
+- **UUID**: e.g., `a1b2c3d4-e5f6-7890-abcd-ef1234567890`
 - **FSTYPE**: Should be `ext4`
 
-**Alternative command** if you're unsure which disk is Xander's:
+**Alternative command** if you're unsure which disk is the target user's:
 
 ```bash
 sudo lsblk -o NAME,SIZE,FSTYPE,UUID,LABEL,MOUNTPOINT
 ```
 
-Xander should tell you the approximate size of his disk (e.g., "1.8TB" or "2TB").
+The target user should tell you the approximate size of their disk (e.g., "1.8TB" or "2TB").
 
 ---
 
 ## Step 3: Create the Mount Point Directory
 
-Create the directory where Xander's disk will mount. Use `/media/xander` as the mount point.
+Create the directory where the target user's disk will mount. Use `/media/<target-user>` as the mount point.
 
 ```bash
-sudo mkdir -p /media/xander
+sudo mkdir -p /media/<target-user>
 ```
+
+Replace `<target-user>` with the target user's actual username.
 
 ---
 
 ## Step 4: Configure Filesystem Root Permissions
 
-Xander's ext4 filesystem stores ownership/permissions in its root inode. 
-These permissions will apply whenever the disk is mounted. Set them now so only Xander can access the disk.
+The target user's ext4 filesystem stores ownership/permissions in its root inode. 
+These permissions will apply whenever the disk is mounted. Set them now so only the target user can access the disk.
 
 **Mount the disk temporarily:**
 
 ```bash
-sudo mount /dev/sdc1 /media/xander
+sudo mount /dev/sdc1 /media/<target-user>
 ```
 
-(Replace `/dev/sdc1` with Xander's actual device path from Step 2.)
+Replace `/dev/sdc1` with the actual device path from Step 2 and `<target-user>` with the target user's actual username.
 
 **Set ownership and permissions on the filesystem root:**
 
 ```bash
-sudo chown xander:xander /media/xander
-sudo chmod 700 /media/xander
+sudo chown <target-user>:<target-user> /media/<target-user>
+sudo chmod 700 /media/<target-user>
 ```
 
-(Replace `xander:xander` with the actual uid:gid from Step 1 if it's different from `1001:1001`.)
+(Replace the usernames with the actual uid:gid from Step 1.)
 
 **Unmount the disk:**
 
 ```bash
-sudo umount /media/xander
+sudo umount /media/<target-user>
 ```
+
+Replace `<target-user>` with the target user's actual username.
 
 **What you just did:**
 - These ownership/permissions are stored inside the ext4 filesystem itself
@@ -113,16 +119,18 @@ sudo umount /media/xander
 
 ## Step 5: Secure the Bare Mount Point Directory
 
-When the disk is not mounted, `/media/xander` is just a directory on your SSD.
-Make it read-only to prevent Xander from accidentally writing to your internal drive if the external disk fails to mount.
+When the disk is not mounted, `/media/<target-user>` is just a directory on your SSD.
+Make it read-only to prevent the target user from accidentally writing to your internal drive if the external disk fails to mount.
 
 ```bash
-sudo chown xander:xander /media/xander
-sudo chmod 500 /media/xander
+sudo chown <target-user>:<target-user> /media/<target-user>
+sudo chmod 500 /media/<target-user>
 ```
 
+Replace `<target-user>` with the target user's actual username.
+
 **Why mode 500 (r-x)?**
-- Xander can access the directory (read + execute) to trigger the automount
+- The target user can access the directory (read + execute) to trigger the automount
 - But cannot write to it (no write permission)
 - When the disk is mounted, the 700 permissions on the filesystem root apply instead
 - This prevents silent data loss if the disk is missing
@@ -139,10 +147,10 @@ sudo nano /etc/fstab
 
 (Or use `sudo vi /etc/fstab` if you prefer vim.)
 
-At the end of the file, add this line. **Replace the UUID with Xander's actual UUID from Step 2:**
+At the end of the file, add this line. **Replace the UUID with the actual UUID from Step 2 and `<target-user>` with the target user's username:**
 
 ```
-UUID=a1b2c3d4-e5f6-7890-abcd-ef1234567890  /media/xander  ext4  noauto,x-systemd.automount,x-systemd.device-timeout=5,nofail,errors=remount-ro,noatime  0  0
+UUID=<actual-uuid>  /media/<target-user>  ext4  noauto,x-systemd.automount,x-systemd.device-timeout=5,nofail,errors=remount-ro,noatime  0  0
 ```
 
 **Save and exit** the editor (Ctrl+O, Enter, Ctrl+X in nano; `:wq` in vi).
@@ -172,10 +180,10 @@ sudo systemctl daemon-reload
 Now explicitly restart the automount unit to activate it:
 
 ```bash
-sudo systemctl restart media-xander.automount
+sudo systemctl restart media-<target-user>.automount
 ```
 
-This ensures the automount is ready to intercept access attempts.
+Replace `<target-user>` with the target user's actual username. This ensures the automount is ready to intercept access attempts.
 
 ---
 
@@ -185,13 +193,15 @@ Run these tests to confirm everything works correctly.
 
 ### Test 1: Automount Triggers on Access
 
-Have Xander access the disk:
+Have the target user access the disk:
 
 ```bash
-sudo -u xander ls /media/xander
+sudo -u <target-user> ls /media/<target-user>
 ```
 
-**Expected output:** Directory listing showing actual disk contents (e.g., `kopia_backup2`, `lost+found`, or whatever is on Xander's disk).
+Replace `<target-user>` with the target user's actual username.
+
+**Expected output:** Directory listing showing actual disk contents.
 
 **If you see:** `Permission denied` → Permissions not set correctly. Go back to Step 4.
 
@@ -202,20 +212,24 @@ sudo -u xander ls /media/xander
 Try accessing the disk as yourself (the sudo user):
 
 ```bash
-ls /media/xander
+ls /media/<target-user>
 ```
 
-**Expected output:** `ls: cannot open directory '/media/xander': Permission denied`
+Replace `<target-user>` with the target user's actual username.
 
-This is correct — the disk is Xander's, not yours.
+**Expected output:** `ls: cannot open directory '/media/<target-user>': Permission denied`
+
+This is correct — the disk is the target user's, not yours.
 
 ### Test 3: Confirm Mount is Active
 
 Check the mount status:
 
 ```bash
-findmnt /media/xander
+findmnt /media/<target-user>
 ```
+
+Replace `<target-user>` with the target user's actual username.
 
 **Expected output:** Shows two layers:
 - `systemd-1 autofs` (the automount system)
@@ -225,24 +239,28 @@ If you see neither, try accessing the disk first (Test 1) to trigger the automou
 
 ### Test 4: Disk Disconnection Handling
 
-**Disconnect the USB cable** and have Xander try to access:
+**Disconnect the USB cable** and have the target user try to access:
 
 ```bash
-sudo -u xander touch /media/xander/test.txt
+sudo -u <target-user> touch /media/<target-user>/test.txt
 ```
+
+Replace `<target-user>` with the target user's actual username.
 
 **Expected behavior:**
 - Command hangs for ~5-10 seconds
-- Then fails with: `touch: cannot touch '/media/xander/test.txt': No such device`
+- Then fails with: `touch: cannot touch '/media/<target-user>/test.txt': No such device`
 - **Important:** No silent writes to your internal SSD
 
 ### Test 5: Port Independence
 
-**Reconnect the USB to a different port** and have Xander try accessing:
+**Reconnect the USB to a different port** and have the target user try accessing:
 
 ```bash
-sudo -u xander ls /media/xander
+sudo -u <target-user> ls /media/<target-user>
 ```
+
+Replace `<target-user>` with the target user's actual username.
 
 **Expected behavior:**
 - Takes ~30-40 seconds (udev detection and device settling)
@@ -254,10 +272,12 @@ sudo -u xander ls /media/xander
 Check the actual mounted filesystem permissions:
 
 ```bash
-stat /media/xander
+stat /media/<target-user>
 ```
 
-**Expected output:** Shows `xander xander` ownership with mode `700` (or `drwx------`).
+Replace `<target-user>` with the target user's actual username.
+
+**Expected output:** Shows `<target-user> <target-user>` ownership with mode `700` (or `drwx------`).
 
 ---
 
@@ -266,14 +286,16 @@ stat /media/xander
 Remove any test files created during verification:
 
 ```bash
-sudo -u xander rm -f /media/xander/test.txt /media/xander/jaron-test*.txt
+sudo -u <target-user> rm -f /media/<target-user>/test.txt
 ```
 
+Replace `<target-user>` with the target user's actual username.
+
 **Document for future reference:**
-- Xander's disk UUID: `a1b2c3d4-e5f6-7890-abcd-ef1234567890` (replace with actual)
-- Device path used: `/dev/sdc1` (replace with actual)
-- Mount point: `/media/xander`
-- Xander's UID: `1001` (replace if different)
+- Target user's disk UUID: `<actual-uuid>`
+- Device path used: `<actual-device>`
+- Mount point: `/media/<target-user>`
+- Target user's UID: `<actual-uid>`
 
 ---
 
@@ -293,7 +315,7 @@ sudo -u xander rm -f /media/xander/test.txt /media/xander/jaron-test*.txt
 | Accidental writes if disk missing | Read-only bare mount point prevents writes to your SSD |
 
 **Access Control:**
-- Only Xander can read/write to the mounted filesystem
+- Only the target user can read/write to the mounted filesystem
 - You (as sudo user) can still access it with `sudo`, but this is expected
 - Other non-sudo users cannot access it
 
@@ -316,20 +338,24 @@ sudo -u xander rm -f /media/xander/test.txt /media/xander/jaron-test*.txt
 **Cause:** Filesystem permissions were not set correctly in Step 4.
 
 **Solution:**
-1. Unmount: `sudo umount /media/xander`
+1. Unmount: `sudo umount /media/<target-user>`
 2. Re-do Step 4 (make sure you used the correct UID/GID)
 3. Run Test 1 again
+
+Replace `<target-user>` with the target user's actual username.
 
 ### Issue: Test 2 should show "Permission denied" but doesn't
 
 **Cause:** Filesystem permissions are too open (not 700).
 
 **Solution:**
-1. Unmount: `sudo umount /media/xander`
-2. Mount temporarily: `sudo mount /dev/sdc1 /media/xander`
-3. Fix permissions: `sudo chmod 700 /media/xander`
-4. Unmount: `sudo umount /media/xander`
+1. Unmount: `sudo umount /media/<target-user>`
+2. Mount temporarily: `sudo mount /dev/sdc1 /media/<target-user>`
+3. Fix permissions: `sudo chmod 700 /media/<target-user>`
+4. Unmount: `sudo umount /media/<target-user>`
 5. Run Test 2 again
+
+Replace `<target-user>` with the target user's actual username.
 
 ### Issue: Test 3 shows nothing
 
@@ -338,8 +364,10 @@ sudo -u xander rm -f /media/xander/test.txt /media/xander/jaron-test*.txt
 **Solution:**
 1. Run Test 1 to trigger the automount
 2. Run Test 3 again
-3. If still nothing, check the automount unit: `systemctl list-units --type automount | grep xander`
+3. If still nothing, check the automount unit: `systemctl list-units --type automount | grep <target-user>`
 4. If not present, re-do Step 7
+
+Replace `<target-user>` with the target user's actual username.
 
 ### Issue: Test 4 doesn't timeout, just succeeds
 
@@ -354,33 +382,39 @@ sudo -u xander rm -f /media/xander/test.txt /media/xander/jaron-test*.txt
 **Cause:** `nofail` option missing from fstab.
 
 **Solution:**
-1. Check the fstab entry: `grep "UUID=" /etc/fstab | grep xander`
+1. Check the fstab entry: `grep "UUID=" /etc/fstab | grep <target-user>`
 2. Verify it includes `nofail`
 3. If missing, edit `/etc/fstab` and add it
 4. Run: `sudo systemctl daemon-reload`
 
+Replace `<target-user>` with the target user's actual username.
+
 ---
 
-## Notes for Xander
+## Notes for the Target User
 
-Share this information with Xander so he knows what to expect:
+Share this information with the target user so they know what to expect:
 
-- **First access is slow:** The first time after connecting the disk, accessing `/media/xander` takes ~30-40 seconds (udev detection).
+- **First access is slow:** The first time after connecting the disk, accessing `/media/<target-user>` takes ~30-40 seconds (udev detection).
 - **Subsequent access is fast:** Once mounted, it's instant.
 - **Different USB ports work:** The disk will work in any USB port on this PC.
-- **Safe failure mode:** If the disk disconnects, access attempts fail cleanly (no silent writes to Jaron's SSD).
-- **Before backups:** Always check disk space with `df -h /media/xander` and verify the disk is connected.
+- **Safe failure mode:** If the disk disconnects, access attempts fail cleanly (no silent writes to the system SSD).
+- **Before backups:** Always check disk space with `df -h /media/<target-user>` and verify the disk is connected.
+
+Replace `<target-user>` with the target user's actual username.
 
 ---
 
 ## Next Steps
 
-Xander can now use his disk on your PC:
+The target user can now use their disk on your PC:
 
 ```bash
-ls /media/xander                    # Check contents
-df -h /media/xander                 # Check disk space
-cp /my/data /media/xander           # Backup data
+ls /media/<target-user>                    # Check contents
+df -h /media/<target-user>                 # Check disk space
+cp /my/data /media/<target-user>           # Backup data
 ```
+
+Replace `<target-user>` with the target user's actual username.
 
 The disk will persist across reboots, kernel updates, and USB port changes. It's ready for reliable backups.

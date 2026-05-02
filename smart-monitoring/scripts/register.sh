@@ -6,20 +6,20 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CHECK_SCRIPT="${SCRIPT_DIR}/smartctl_email_check.sh"
+CHECK_SCRIPT="${SCRIPT_DIR}/check.sh"
 
 echo "=== SMART Health Check Cron Job Registration ==="
 echo
 
 # Verify the check script exists
 if [ ! -f "$CHECK_SCRIPT" ]; then
-    echo "Error: smartctl_email_check.sh not found at ${CHECK_SCRIPT}"
+    echo "Error: check.sh not found at ${CHECK_SCRIPT}"
     exit 1
 fi
 
 # Make check script executable
 chmod +x "$CHECK_SCRIPT"
-echo "✓ smartctl_email_check.sh is executable"
+echo "✓ check.sh is executable"
 
 # Check if smartctl is installed
 if ! command -v smartctl &> /dev/null; then
@@ -43,8 +43,11 @@ echo
 read -p "Enter device path [/dev/sdc1]: " DEVICE
 DEVICE="${DEVICE:-/dev/sdc1}"
 
-read -p "Enter recipient email(s) [xblaauw@gmail.com,jaronheising@gmail.com]: " RECIPIENT
-RECIPIENT="${RECIPIENT:-xblaauw@gmail.com,jaronheising@gmail.com}"
+read -p "Enter recipient email(s): " RECIPIENT
+if [ -z "$RECIPIENT" ]; then
+    echo "Error: Recipient email is required"
+    exit 1
+fi
 
 echo
 echo "=== SMTP Configuration ==="
@@ -61,8 +64,11 @@ if [ "$SMTP_CHOICE" = "2" ]; then
     read -p "SMTP port [587]: " SMTP_PORT
     SMTP_PORT="${SMTP_PORT:-587}"
 
-    read -p "SMTP username [xander@painapple.nl]: " SMTP_USER
-    SMTP_USER="${SMTP_USER:-xander@painapple.nl}"
+    read -p "SMTP username: " SMTP_USER
+    if [ -z "$SMTP_USER" ]; then
+        echo "Error: SMTP username is required"
+        exit 1
+    fi
 
     read -p "SMTP password: " -s SMTP_PASSWORD
     echo

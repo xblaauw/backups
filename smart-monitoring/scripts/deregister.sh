@@ -33,4 +33,4 @@ fi
 echo
 echo "=== Deregistration Complete ==="
 echo
-echo "To re-register: bash $(dirname "${BASH_SOURCE[0]}")/register_smartctl_email_cron.sh"
+echo "To re-register: bash $(dirname "${BASH_SOURCE[0]}")/register.sh"

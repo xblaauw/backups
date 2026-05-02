@@ -8,7 +8,7 @@
 # IMPORTANT: Always sends email on any condition (health check or error)
 #
 # Configuration is read from environment variables set by crontab,
-# which are configured during registration with register_smartctl_email_cron.sh
+# which are configured during registration with scripts/register.sh
 
 # DO NOT use set -e — we want to catch and report errors, not exit silently
 # set -e
@@ -24,7 +24,7 @@ LOG_FILE=~/.smartctl_check.log
 if [ -z "$DEVICE" ] || [ -z "$RECIPIENT" ]; then
     echo "ERROR: SMARTCTL_DEVICE and SMARTCTL_RECIPIENT environment variables not set"
     echo "This script must be run by crontab with proper environment variables."
-    echo "Re-run: bash ~/Projects/backups/register_smartctl_email_cron.sh"
+    echo "Re-run: bash ~/Projects/backups/smart-monitoring/scripts/register.sh"
     exit 1
 fi
 

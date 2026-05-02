@@ -8,11 +8,11 @@
 This guide sets up persistent, resilient mounting of an external HDD that:
 - Always mounts to the same location regardless of USB port or system state
 - Survives kernel updates, sudden disconnects, power outages, and reboots
-- Provides exclusive access to a specific non-sudo user (e.g., Jaron)
+- Provides exclusive access to a specific non-sudo user
 - Prevents accidental writes to the internal drive if the external disk is missing
 
 **Prerequisites:**
-- Two user accounts: one with sudo (e.g., xander), one without (e.g., jaron)
+- Two user accounts: one with sudo (admin), one without (target user)
 - External HDD already formatted with ext4
 - The external disk should be connected during initial setup
 
@@ -43,22 +43,26 @@ blkid /dev/sdc1
 
 ## Step 2: Determine Target User's ID
 
-Get the UID and GID of the user who will own the disk (e.g., jaron).
+Get the UID and GID of the user who will own the disk.
 
 ```bash
-id jaron
-# Output: uid=1001(jaron) gid=1001(jaron) groups=1001(jaron),100(users)
+id <target-user>
+# Output: uid=1001(<target-user>) gid=1001(<target-user>) groups=1001(<target-user>),100(users)
 ```
+
+Replace `<target-user>` with the actual username (e.g., `jaron`, `alice`, etc.).
 
 ---
 
 ## Step 3: Create Mount Point Directory
 
-Create the directory where the disk will mount. Use a simple path like `/media/jaron`.
+Create the directory where the disk will mount. Use a simple path like `/media/<target-user>`.
 
 ```bash
-sudo mkdir -p /media/jaron
+sudo mkdir -p /media/<target-user>
 ```
+
+Replace `<target-user>` with the target user's actual username.
 
 ---
 
@@ -69,16 +73,18 @@ This must be set so only the target user can access it.
 
 ```bash
 # Mount the disk temporarily
-sudo mount /dev/sdc1 /media/jaron
+sudo mount /dev/sdc1 /media/<target-user>
 
 # Change ownership and permissions on the filesystem root
 # This affects the disk's actual root directory, not the mount point
-sudo chown jaron:jaron /media/jaron
-sudo chmod 700 /media/jaron
+sudo chown <target-user>:<target-user> /media/<target-user>
+sudo chmod 700 /media/<target-user>
 
 # Unmount
-sudo umount /media/jaron
+sudo umount /media/<target-user>
 ```
+
+Replace `<target-user>` with the target user's actual username.
 
 **Why this works:**
 - ext4 stores permissions inside the filesystem itself
@@ -89,16 +95,18 @@ sudo umount /media/jaron
 
 ## Step 5: Secure the Bare Mount Point
 
-When the disk is not mounted, `/media/jaron` is just a directory on your SSD. 
+When the disk is not mounted, `/media/<target-user>` is just a directory on your SSD. 
 Make it read-only to prevent accidental writes if the disk fails to mount.
 
 ```bash
-sudo chown jaron:jaron /media/jaron
-sudo chmod 500 /media/jaron
+sudo chown <target-user>:<target-user> /media/<target-user>
+sudo chmod 500 /media/<target-user>
 ```
 
+Replace `<target-user>` with the target user's actual username.
+
 **Why mode 500 (r-x)?**
-- Jaron can access the directory (read + execute)
+- The target user can access the directory (read + execute)
 - But cannot write to it (no write permission)
 - The automount system can still intercept access and mount the real disk
 - When the disk is mounted, the 700 permissions on the filesystem root apply instead
@@ -114,10 +122,10 @@ sudo nano /etc/fstab
 # or use: sudo vi /etc/fstab
 ```
 
-Add this line (replace the UUID with your actual UUID):
+Add this line (replace the UUID with your actual UUID and `<target-user>` with the target user's username):
 
 ```
-UUID=cc6e9ded-5c6f-4d4f-baac-2360c40359fc  /media/jaron  ext4  noauto,x-systemd.automount,x-systemd.device-timeout=5,nofail,errors=remount-ro,noatime  0  0
+UUID=<your-disk-uuid>  /media/<target-user>  ext4  noauto,x-systemd.automount,x-systemd.device-timeout=5,nofail,errors=remount-ro,noatime  0  0
 ```
 
 **Option Explanations:**
@@ -152,8 +160,10 @@ The automount unit may not activate immediately after `daemon-reload`.
 Explicitly restart it to ensure it's ready.
 
 ```bash
-sudo systemctl restart media-jaron.automount
+sudo systemctl restart media-<target-user>.automount
 ```
+
+Replace `<target-user>` with the target user's actual username (e.g., `media-jaron.automount`).
 
 **Why this step?**  
 In our testing, the automount unit was created but inactive until explicitly restarted. 
@@ -168,26 +178,32 @@ Run these tests to confirm everything works:
 ### Test 1: Automount Triggers on Access
 
 ```bash
-# Access the disk as the target user (jaron)
-sudo -u jaron ls /media/jaron
+# Access the disk as the target user
+sudo -u <target-user> ls /media/<target-user>
 ```
+
+Replace `<target-user>` with the target user's actual username.
 
 **Expected output:** Directory listing showing actual disk contents (e.g., `kopia_backup2`, `lost+found`).
 
 ### Test 2: Other Users Cannot Access
 
 ```bash
-# Try accessing as another user (e.g., xander or another sudo user)
-ls /media/jaron
+# Try accessing as another user (e.g., a sudo user)
+ls /media/<target-user>
 ```
 
-**Expected output:** `ls: cannot open directory '/media/jaron': Permission denied`
+Replace `<target-user>` with the target user's actual username.
+
+**Expected output:** `ls: cannot open directory '/media/<target-user>': Permission denied`
 
 ### Test 3: Confirm Mount is Active
 
 ```bash
-findmnt /media/jaron
+findmnt /media/<target-user>
 ```
+
+Replace `<target-user>` with the target user's actual username.
 
 **Expected output:** Shows both the automount layer (systemd-1 autofs) and the actual ext4 mount.
 
@@ -196,8 +212,10 @@ findmnt /media/jaron
 **Disconnect the USB cable** and try to access:
 
 ```bash
-sudo -u jaron touch /media/jaron/test.txt
+sudo -u <target-user> touch /media/<target-user>/test.txt
 ```
+
+Replace `<target-user>` with the target user's actual username.
 
 **Expected behavior:**
 - Command hangs for ~5-10 seconds (the device timeout)
@@ -209,8 +227,10 @@ sudo -u jaron touch /media/jaron/test.txt
 **Reconnect the USB cable to a different port** and try accessing again:
 
 ```bash
-sudo -u jaron ls /media/jaron
+sudo -u <target-user> ls /media/<target-user>
 ```
+
+Replace `<target-user>` with the target user's actual username.
 
 **Expected behavior:**
 - Takes ~30-40 seconds for udev detection and device settling
@@ -221,10 +241,12 @@ sudo -u jaron ls /media/jaron
 
 ```bash
 # Check the actual permissions on the mounted root
-stat /media/jaron
+stat /media/<target-user>
 ```
 
-**Expected output:** Shows `jaron jaron 700` (or similar: `drwx------`).
+Replace `<target-user>` with the target user's actual username.
+
+**Expected output:** Shows `<target-user> <target-user> 700` (or similar: `drwx------`).
 
 ---
 
@@ -237,33 +259,35 @@ stat /media/jaron
 **Solution:**
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl restart media-jaron.automount
+sudo systemctl restart media-<target-user>.automount
 ```
 
-Then try accessing the mount point again to trigger the automount.
+Replace `<target-user>` with the target user's actual username, then try accessing the mount point again to trigger the automount.
 
 ### Issue: Files created in `/media/jaron` but disk not mounted
 
 **Cause:** The automount unit is present but not intercepting access properly.
 
 **Solution:**
-1. Verify the unit exists: `systemctl list-units --type automount | grep jaron`
-2. Restart it: `sudo systemctl restart media-jaron.automount`
-3. Try accessing again: `sudo -u jaron ls /media/jaron`
+1. Verify the unit exists: `systemctl list-units --type automount | grep <target-user>`
+2. Restart it: `sudo systemctl restart media-<target-user>.automount`
+3. Try accessing again: `sudo -u <target-user> ls /media/<target-user>`
 
-### Issue: Jaron can write to bare mount point (before disk mounts)
+Replace `<target-user>` with the target user's actual username.
+
+### Issue: Target user can write to bare mount point (before disk mounts)
 
 **Cause:** Mount point directory has write permissions (mode 700).
 
 **Solution:** Change to read-only:
 ```bash
-sudo umount /media/jaron  # if currently mounted
-sudo chmod 500 /media/jaron
+sudo umount /media/<target-user>  # if currently mounted
+sudo chmod 500 /media/<target-user>
 ```
 
-Then test that writes fail:
+Replace `<target-user>` with the target user's actual username. Then test that writes fail:
 ```bash
-sudo -u jaron touch /media/jaron/test.txt  # should fail or trigger automount
+sudo -u <target-user> touch /media/<target-user>/test.txt  # should fail or trigger automount
 ```
 
 ### Issue: Boot hangs waiting for disk
@@ -272,10 +296,10 @@ sudo -u jaron touch /media/jaron/test.txt  # should fail or trigger automount
 
 **Solution:** Verify the fstab line includes `nofail`:
 ```bash
-grep "UUID=cc6e9ded" /etc/fstab
+grep "UUID=" /etc/fstab | grep media-<target-user>
 ```
 
-Should show the option. If missing, edit `/etc/fstab` and add it.
+Replace `<target-user>` with the target user's actual username. Should show the option. If missing, edit `/etc/fstab` and add it.
 
 ### Issue: Long delays when accessing disk (30-40 seconds)
 
@@ -310,8 +334,10 @@ This setup handles:
 If you want the disk to mount automatically at boot (assuming it's connected), change the fstab line to:
 
 ```
-UUID=cc6e9ded-5c6f-4d4f-baac-2360c40359fc  /media/jaron  ext4  auto,nofail,x-systemd.device-timeout=5,errors=remount-ro,noatime  0  0
+UUID=<your-disk-uuid>  /media/<target-user>  ext4  auto,nofail,x-systemd.device-timeout=5,errors=remount-ro,noatime  0  0
 ```
+
+Replace `<your-disk-uuid>` with your actual disk UUID and `<target-user>` with the target user's username.
 
 Change:
 - `noauto` → `auto` (mount at boot if device is present)
@@ -329,20 +355,22 @@ After a reboot, verify the setup still works:
 
 ```bash
 # With disk connected:
-sudo -u jaron ls /media/jaron  # should work
-ls /media/jaron                 # should fail
+sudo -u <target-user> ls /media/<target-user>  # should work
+ls /media/<target-user>                         # should fail
 
 # Without disk connected:
-sudo -u jaron ls /media/jaron  # should timeout then fail
+sudo -u <target-user> ls /media/<target-user>  # should timeout then fail
 ```
+
+Replace `<target-user>` with the target user's actual username.
 
 ---
 
 ## Notes
 
-- **Permission ownership:** The filesystem root must be owned by the target user (e.g., `jaron:jaron`). This is set during Step 4 and stored inside the ext4 filesystem itself.
+- **Permission ownership:** The filesystem root must be owned by the target user. This is set during Step 4 and stored inside the ext4 filesystem itself.
 
-- **Mount point vs. filesystem:** The bare directory `/media/jaron` on the SSD and the ext4 filesystem's root are separate. Step 4 configures the filesystem; Steps 3, 5 configure the mount point.
+- **Mount point vs. filesystem:** The bare directory `/media/<target-user>` on the SSD and the ext4 filesystem's root are separate. Step 4 configures the filesystem; Steps 3, 5 configure the mount point.
 
 - **UUID vs. device names:** `/dev/sdc1` can change to `/dev/sdd1` if USB order changes. UUID never changes, making it the reliable identifier.
 

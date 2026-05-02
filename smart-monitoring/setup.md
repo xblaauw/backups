@@ -41,7 +41,7 @@ smartctl --version
 
 ### 2. Install msmtp
 
-`msmtp` is a lightweight SMTP client that sends emails. You'll use it to email Jaron when problems occur.
+`msmtp` is a lightweight SMTP client that sends emails. You'll use it to send alerts when problems occur.
 
 ```bash
 sudo apt-get install msmtp msmtp-mta
@@ -68,7 +68,7 @@ sudo visudo
 At the **end of the file**, add this line:
 
 ```
-xander ALL=(ALL) NOPASSWD: /usr/sbin/smartctl
+<username> ALL=(ALL) NOPASSWD: /usr/sbin/smartctl
 ```
 
 Save and exit (Ctrl+O, Enter, Ctrl+X in nano; `:wq` in vi).
@@ -83,17 +83,15 @@ Find the device path of your external HDD:
 lsblk -o NAME,SIZE,FSTYPE,UUID,LABEL
 ```
 
-Look for your disk (from our earlier setup: likely `/dev/sdc1`, labeled `jaron-c-hdd`, UUID `cc6e9ded-5c6f-4d4f-baac-2360c40359fc`).
+Look for your disk — note the device path, UUID, and label (if present).
 
 **Write down your device path** — you'll need it during setup.
 
 ### 5. Have Recipients' Emails
 
-Default recipients:
-- Xander: `xander@painapple.nl`
-- Jaron: `jaronheising@gmail.com`
-
-(You can use different addresses or add more by using comma-separated values during registration.)
+Enter recipient email address(es). You can specify:
+- A single address: `admin@example.com`
+- Multiple addresses (comma-separated): `admin@example.com,user@example.com`
 
 ---
 
@@ -105,7 +103,7 @@ Navigate to the backups directory:
 
 ```bash
 cd ~/Projects/backups
-chmod +x register_smartctl_email_cron.sh deregister_smartctl_email_cron.sh smartctl_email_check.sh
+chmod +x scripts/register.sh descripts/register.sh scripts/check.sh
 ```
 
 ### Step 2: Configure Passwordless sudo for smartctl
@@ -119,7 +117,7 @@ sudo visudo
 Add this line at the end:
 
 ```
-xander ALL=(ALL) NOPASSWD: /usr/sbin/smartctl
+<username> ALL=(ALL) NOPASSWD: /usr/sbin/smartctl
 ```
 
 Save and exit.
@@ -129,13 +127,13 @@ Save and exit.
 This interactive script sets up everything:
 
 ```bash
-bash register_smartctl_email_cron.sh
+bash scripts/register.sh
 ```
 
 **You'll be prompted for:**
 
-1. **Device path** — Press Enter to use `/dev/sdc1`, or enter your actual device (e.g., `/dev/sdd1`)
-2. **Recipient email(s)** — Press Enter to use `xander@painapple.nl,jaronheising@gmail.com`, or enter alternatives (comma-separated for multiple)
+1. **Device path** — Enter your disk device path (e.g., `/dev/sdc1`, `/dev/sdd1`)
+2. **Recipient email(s)** — Enter email address(es) for alerts (comma-separated for multiple)
 3. **SMTP Provider** — Choose:
    - **Option 1: Gmail** — Uses `smtp.gmail.com` port 587. Just provide your Gmail address and password
    - **Option 2: Custom SMTP** — Provide server, port, username, password (default: `mail.antagonist.nl` port 587)
@@ -154,7 +152,7 @@ bash register_smartctl_email_cron.sh
 ```
 === SMART Health Check Cron Job Registration ===
 
-✓ smartctl_email_check.sh is executable
+✓ scripts/check.sh is executable
 ✓ smartctl is installed
 ✓ msmtp is installed
 
@@ -179,8 +177,9 @@ crontab -l | grep smartctl
 
 **Expected output:**
 ```
-0 9 * * * SMARTCTL_DEVICE=/dev/sdc1 SMARTCTL_RECIPIENT=xblaauw@gmail.com /home/xander/Projects/backups/smartctl_email_check.sh > /dev/null 2>&1
+0 9 * * * SMARTCTL_DEVICE=<device> SMARTCTL_RECIPIENT=<email> /home/xander/Projects/backups/smart-monitoring/scripts/check.sh > /dev/null 2>&1
 ```
+(Where `<device>` is your actual device path and `<email>` is your recipient address.)
 
 ---
 
@@ -189,7 +188,7 @@ crontab -l | grep smartctl
 ### Test 1: Run the Check Manually
 
 ```bash
-bash ~/Projects/backups/smartctl_email_check.sh
+bash ~/Projects/backups/scripts/check.sh
 ```
 
 **Expected behavior:**
@@ -320,8 +319,8 @@ Common issues:
 
 **Re-register to fix:**
 ```bash
-bash ~/Projects/backups/deregister_smartctl_email_cron.sh
-bash ~/Projects/backups/register_smartctl_email_cron.sh
+bash ~/Projects/backups/smart-monitoring/scripts/deregister.sh
+bash ~/Projects/backups/smart-monitoring/scripts/register.sh
 ```
 
 ### Issue: "Permission denied" when running smartctl
@@ -335,12 +334,12 @@ sudo visudo
 
 Add this line at the end:
 ```
-xander ALL=(ALL) NOPASSWD: /usr/sbin/smartctl
+<username> ALL=(ALL) NOPASSWD: /usr/sbin/smartctl
 ```
 
 Save and exit. Then test again:
 ```bash
-bash ~/Projects/backups/smartctl_email_check.sh
+bash ~/Projects/backups/scripts/check.sh
 ```
 
 ### Issue: Device not found (`/dev/sdc1`)
@@ -354,8 +353,8 @@ Look for your disk. If it's at a different path (e.g., `/dev/sdd1`), you need to
 
 **Option 1: Re-register**
 ```bash
-bash ~/Projects/backups/deregister_smartctl_email_cron.sh
-bash ~/Projects/backups/register_smartctl_email_cron.sh
+bash ~/Projects/backups/descripts/register.sh
+bash ~/Projects/backups/scripts/register.sh
 ```
 
 **Option 2: Manual update**
@@ -394,7 +393,7 @@ grep CRON /var/log/syslog | tail -20
 
 **Test cron job manually:**
 ```bash
-bash ~/Projects/backups/smartctl_email_check.sh
+bash ~/Projects/backups/scripts/check.sh
 ```
 
 ---
@@ -404,7 +403,7 @@ bash ~/Projects/backups/smartctl_email_check.sh
 If you want to stop monitoring:
 
 ```bash
-bash ~/Projects/backups/deregister_smartctl_email_cron.sh
+bash ~/Projects/backups/smart-monitoring/scripts/deregister.sh
 ```
 
 You'll be prompted to remove credentials and configuration files. Choose yes to clean up everything.
@@ -427,10 +426,9 @@ You can use crontab.guru to generate schedules.
 
 ## Monitoring Multiple Disks
 
-This setup monitors one disk (`/dev/sdc1`). To monitor Jaron's disk on his PC as well, repeat the setup on his system with:
-- His sudo account
-- His recipient email (or yours)
-- The path to his external HDD
+This setup monitors one disk per system. To monitor additional disks:
+- On the same system: Re-run the registration script with a different cron schedule (e.g., different hour)
+- On another system: Run the registration script on that system with its own configuration
 
 The scripts are self-contained and can run on multiple systems independently.
 
@@ -457,7 +455,7 @@ Once you've verified the monitoring system is working (after a few days of recei
 Edit the check script:
 
 ```bash
-nano ~/Projects/backups/smartctl_email_check.sh
+nano ~/Projects/backups/scripts/check.sh
 ```
 
 ---
@@ -489,7 +487,7 @@ crontab -l | grep smartctl             # View cron job
 
 **Test monitoring:**
 ```bash
-bash ~/Projects/backups/smartctl_email_check.sh  # Run manual check
+bash ~/Projects/backups/scripts/check.sh  # Run manual check
 tail -f ~/.smartctl_check.log                     # Watch logs
 ```
 
@@ -502,7 +500,7 @@ crontab -e                        # Edit cron schedule
 
 **Remove monitoring:**
 ```bash
-bash ~/Projects/backups/deregister_smartctl_email_cron.sh
+bash ~/Projects/backups/descripts/register.sh
 ```
 
 ---
@@ -510,8 +508,8 @@ bash ~/Projects/backups/deregister_smartctl_email_cron.sh
 ## Next Steps
 
 1. Configure passwordless sudo for smartctl (Step 2 in Setup Process above)
-2. Run the registration script: `bash register_smartctl_email_cron.sh`
-3. Test manually: `bash smartctl_email_check.sh`
+2. Run the registration script: `bash scripts/register.sh`
+3. Test manually: `bash scripts/check.sh`
 4. Check the log: `tail -f ~/.smartctl_check.log`
 5. Wait for the scheduled time (or 1 minute if testing) to see cron in action
-6. Mirror the setup on Jaron's side when ready
+6. To set up monitoring on another system, repeat the process on that system
