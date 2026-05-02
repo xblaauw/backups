@@ -145,7 +145,7 @@ CRON_SCHEDULE="${CRON_SCHEDULE:-0 9 * * *}"
 
 # Create cron job
 CRON_JOB="$CRON_SCHEDULE SMARTCTL_DEVICE=$DEVICE SMARTCTL_RECIPIENT=$RECIPIENT $CHECK_SCRIPT > /dev/null 2>&1"
-(crontab -l 2>/dev/null | grep -v smartctl_email_check || true; echo "$CRON_JOB") | crontab -
+(crontab -l 2>/dev/null | grep -v "SMARTCTL_DEVICE=$DEVICE" || true; echo "$CRON_JOB") | crontab -
 echo "✓ Registered cron job: $CRON_SCHEDULE"
 echo "  Device: $DEVICE"
 echo "  Recipient: $RECIPIENT"
