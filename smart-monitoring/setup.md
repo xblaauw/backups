@@ -158,7 +158,7 @@ bash scripts/register.sh
 
 Enter device path [/dev/sdc1]: [press Enter or type your device]
 Enter recipient email [xblaauw@gmail.com]: [press Enter or accept]
-Enter SMTP password for xander@painapple.nl: [type your password, hidden]
+Enter SMTP password: [type your password, hidden]
 
 ✓ Created credentials file: ~/.smartctl_email_creds (mode 600)
 ✓ Created msmtp configuration: ~/.msmtprc (mode 600)
@@ -177,7 +177,7 @@ crontab -l | grep smartctl
 
 **Expected output:**
 ```
-0 9 * * * SMARTCTL_DEVICE=<device> SMARTCTL_RECIPIENT=<email> /home/xander/Projects/backups/smart-monitoring/scripts/check.sh > /dev/null 2>&1
+0 9 * * * SMARTCTL_DEVICE=<device> SMARTCTL_RECIPIENT=<email> <path-to>/smart-monitoring/scripts/check.sh > /dev/null 2>&1
 ```
 (Where `<device>` is your actual device path and `<email>` is your recipient address.)
 

@@ -142,8 +142,8 @@ bash ~/Projects/backups/smart-monitoring/scripts/check.sh  # Manual health check
 tail -f ~/.smartctl_check.log                              # Watch for results
 
 # Verify mount is accessible
-ls /media/jaron                     # Should list disk contents
-findmnt /media/jaron               # Show mount details
+ls /media/<target-user>                     # Should list disk contents
+findmnt /media/<target-user>               # Show mount details
 ```
 
 ## Common Tasks
@@ -171,7 +171,7 @@ bash ~/Projects/backups/smart-monitoring/scripts/deregister.sh
 
 ### See what's mounted
 ```bash
-findmnt /media/jaron
+findmnt /media/<target-user>
 ```
 
 ### Mirror setup on another laptop

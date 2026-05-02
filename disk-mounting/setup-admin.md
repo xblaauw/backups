@@ -50,7 +50,7 @@ id <target-user>
 # Output: uid=1001(<target-user>) gid=1001(<target-user>) groups=1001(<target-user>),100(users)
 ```
 
-Replace `<target-user>` with the actual username (e.g., `jaron`, `alice`, etc.).
+Replace `<target-user>` with the actual username (e.g., `alice`, `bob`, etc.).
 
 ---
 
@@ -89,7 +89,7 @@ Replace `<target-user>` with the target user's actual username.
 **Why this works:**
 - ext4 stores permissions inside the filesystem itself
 - These permissions survive unmounts, USB port changes, and reboots
-- Any user besides jaron (and root) cannot access the mounted filesystem
+- Any user besides the target user (and root) cannot access the mounted filesystem
 
 ---
 
@@ -164,7 +164,7 @@ Explicitly restart it to ensure it's ready.
 sudo systemctl restart media-<target-user>.automount
 ```
 
-Replace `<target-user>` with the target user's actual username (e.g., `media-jaron.automount`).
+Replace `<target-user>` with the target user's actual username (e.g., `media-alice.automount`).
 
 **Why this step?**  
 In our testing, the automount unit was created but inactive until explicitly restarted. 
@@ -220,7 +220,7 @@ Replace `<target-user>` with the target user's actual username.
 
 **Expected behavior:**
 - Command hangs for ~5-10 seconds (the device timeout)
-- Then fails with: `touch: cannot touch '/media/jaron/test.txt': No such device`
+- Then fails with: `touch: cannot touch '/media/<target-user>/test.txt': No such device`
 - **Important:** No silent writes to your internal SSD
 
 ### Test 5: Port Independence
@@ -265,7 +265,7 @@ sudo systemctl restart media-<target-user>.automount
 
 Replace `<target-user>` with the target user's actual username, then try accessing the mount point again to trigger the automount.
 
-### Issue: Files created in `/media/jaron` but disk not mounted
+### Issue: Files created in `/media/<target-user>` but disk not mounted
 
 **Cause:** The automount unit is present but not intercepting access properly.
 
