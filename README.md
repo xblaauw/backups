@@ -66,13 +66,20 @@ This folder contains everything needed to set up and maintain:
 
 ### Recommended: Use Claude Code
 
-**The easiest way to set this up:** Open [Claude Code](https://claude.com/claude-code) with this repository, and let Claude guide you through the process step-by-step. Claude will:
+**The easiest way to set this up:** Clone this repository, open it in Claude Code, and let Claude guide you through the process step-by-step. Claude will:
 - Ask clarifying questions about your setup
 - Guide you through each step
 - Verify each command worked before proceeding
 - Help troubleshoot if anything goes wrong
 
-Simply share this repo with Claude Code and describe what you want to set up.
+**To get started:**
+```bash
+git clone https://github.com/xblaauw/backups
+cd backups
+claude
+```
+
+Then describe what you want to set up, and Claude will guide you through it.
 
 ### Manual Setup (Alternative)
 
