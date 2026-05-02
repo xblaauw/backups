@@ -1,4 +1,7 @@
-# Setting Up Xander's External HDD on Jaron's PC
+# Setting Up External HDD for Another User
+
+**Version:** 1.0  
+**Last Updated:** 2026-05-02
 
 ## Overview
 

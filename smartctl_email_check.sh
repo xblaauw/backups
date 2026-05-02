@@ -1,20 +1,32 @@
 #!/bin/bash
 
 # SMART Health Check with Email Alert
+# Version: 1.0 (2026-05-02)
+#
 # Checks the SMART health status of an external HDD
 # Sends an email to a recipient with the result (success or failure)
 # IMPORTANT: Always sends email on any condition (health check or error)
+#
+# Configuration is read from environment variables set by crontab,
+# which are configured during registration with register_smartctl_email_cron.sh
 
 # DO NOT use set -e — we want to catch and report errors, not exit silently
 # set -e
 
-# Configuration
-DEVICE="${SMARTCTL_DEVICE:-/dev/sdc1}"
-RECIPIENT="${SMARTCTL_RECIPIENT:-xblaauw@gmail.com}"
-SENDER="xander@painapple.nl"
+# Configuration - from crontab environment variables
+DEVICE="${SMARTCTL_DEVICE}"
+RECIPIENT="${SMARTCTL_RECIPIENT}"
 HOSTNAME=$(hostname)
 CHECK_TIME=$(date '+%Y-%m-%d %H:%M:%S')
 LOG_FILE=~/.smartctl_check.log
+
+# Validate required environment variables from crontab
+if [ -z "$DEVICE" ] || [ -z "$RECIPIENT" ]; then
+    echo "ERROR: SMARTCTL_DEVICE and SMARTCTL_RECIPIENT environment variables not set"
+    echo "This script must be run by crontab with proper environment variables."
+    echo "Re-run: bash ~/Projects/backups/register_smartctl_email_cron.sh"
+    exit 1
+fi
 
 # Log function
 log_result() {

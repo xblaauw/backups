@@ -1,5 +1,8 @@
 # SMART Health Monitoring Setup
 
+**Version:** 1.0  
+**Last Updated:** 2026-05-02
+
 ## Overview
 
 This setup monitors the health of your external HDD using SMART (Self-Monitoring, Analysis and Reporting Technology) and sends you an email report on every check.
@@ -84,7 +87,7 @@ Look for your disk (from our earlier setup: likely `/dev/sdc1`, labeled `jaron-c
 
 **Write down your device path** — you'll need it during setup.
 
-### 4. Have Recipients' Emails
+### 5. Have Recipients' Emails
 
 Default recipients:
 - Xander: `xander@painapple.nl`
@@ -239,8 +242,9 @@ Or just wait until the scheduled time and check the log.
 
 ### Healthy Disk
 - **Status:** PASSED
-- **Action:** No email sent; logged silently
-- **What it means:** Disk is healthy, no action needed
+- **Action:** Email sent with ✅ subject; logged locally
+- **What it means:** Disk is healthy, monitoring system is working correctly
+- **Why email on success?** You need proof the monitoring is alive. If emails stop, you know something is wrong.
 
 ### Unhealthy Disk
 
@@ -372,8 +376,9 @@ crontab -e
 
 **Test email manually:**
 ```bash
-echo "Test" | msmtp -a antagonist xblaauw@gmail.com
+echo "Test" | msmtp your-email@example.com
 ```
+(Replace `your-email@example.com` with the recipient email.)
 
 ### Issue: Cron job doesn't seem to run
 
@@ -441,7 +446,7 @@ The scripts are self-contained and can run on multiple systems independently.
 
 - **When to care:** SMART warnings are early indicators. A PASSED status doesn't guarantee the disk is perfect, but FAILED/WARNING means you should act quickly.
 
-- **Offline disks:** If the disk is not connected when cron runs, smartctl will fail. The script won't send an email about a missing disk (only about health issues). This is intentional — the disk might just be disconnected temporarily.
+- **Offline disks:** If the disk is not connected when cron runs, smartctl will fail with "No such device" error. An email IS sent reporting this error (with 🔴 subject) so you know immediately that the disk is missing or inaccessible.
 
 ---
 
@@ -471,6 +476,34 @@ This monitoring system is designed to **always send an email**, even on success.
 - If the cron job dies → you'll notice the silence immediately
 
 **Filter if needed:** If daily emails become too much, set up email filters to automatically organize them, but keep receiving them. Never disable emails in the script.
+
+---
+
+## Quick Reference Cheat Sheet
+
+**Check configuration:**
+```bash
+cat ~/.smartctl_check.env              # View setup details
+crontab -l | grep smartctl             # View cron job
+```
+
+**Test monitoring:**
+```bash
+bash ~/Projects/backups/smartctl_email_check.sh  # Run manual check
+tail -f ~/.smartctl_check.log                     # Watch logs
+```
+
+**Fix issues:**
+```bash
+cat ~/.msmtp.log                  # Email sending errors
+sudo smartctl -H /dev/sdc1        # Check disk directly
+crontab -e                        # Edit cron schedule
+```
+
+**Remove monitoring:**
+```bash
+bash ~/Projects/backups/deregister_smartctl_email_cron.sh
+```
 
 ---
 

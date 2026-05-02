@@ -1,5 +1,8 @@
 # Persistent External HDD Mount for Multi-User Access
 
+**Version:** 1.0  
+**Last Updated:** 2026-05-02
+
 ## Overview
 
 This guide sets up persistent, resilient mounting of an external HDD that:

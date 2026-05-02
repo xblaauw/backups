@@ -1,4 +1,7 @@
-# Jaron's Disk Access Test Guide
+# Disk Access Test Guide
+
+**Version:** 1.0  
+**Last Updated:** 2026-05-02
 
 This guide lets you verify that your external HDD is properly set up and ready for backups.
 
