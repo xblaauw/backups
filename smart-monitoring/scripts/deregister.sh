@@ -9,9 +9,9 @@ echo "=== SMART Health Check Cron Job Deregistration ==="
 echo
 
 # Remove cron job
-if crontab -l 2>/dev/null | grep -q smartctl_email_check; then
-    (crontab -l 2>/dev/null | grep -v smartctl_email_check) | crontab -
-    echo "✓ Removed cron job"
+if crontab -l 2>/dev/null | grep -q SMARTCTL_DEVICE; then
+    (crontab -l 2>/dev/null | grep -v SMARTCTL_DEVICE) | crontab -
+    echo "✓ Removed cron job(s)"
 else
     echo "ℹ No cron job found"
 fi
