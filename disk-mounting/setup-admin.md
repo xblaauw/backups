@@ -349,23 +349,6 @@ Then `sudo systemctl daemon-reload` to apply.
 
 ---
 
-## Verifying After Reboot
-
-After a reboot, verify the setup still works:
-
-```bash
-# With disk connected:
-sudo -u <target-user> ls /media/<target-user>  # should work
-ls /media/<target-user>                         # should fail
-
-# Without disk connected:
-sudo -u <target-user> ls /media/<target-user>  # should timeout then fail
-```
-
-Replace `<target-user>` with the target user's actual username.
-
----
-
 ## Notes
 
 - **Permission ownership:** The filesystem root must be owned by the target user. This is set during Step 4 and stored inside the ext4 filesystem itself.
