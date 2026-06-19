@@ -25,7 +25,7 @@ if ! systemctl list-units --type=automount --all 2>/dev/null | grep -q "$UNIT_NA
 fi
 
 # Extract UUID from fstab
-UUID=$(awk -v mp="$MOUNT_POINT" '$2 == mp { match($1, /UUID=(.+)/, a); if (a[1]) print a[1] }' /etc/fstab)
+UUID=$(awk -v mp="$MOUNT_POINT" '$2 == mp && $1 ~ /^UUID=/ { sub(/^UUID=/, "", $1); print $1 }' /etc/fstab)
 if [ -z "$UUID" ]; then
     echo "Error: no fstab entry found for $MOUNT_POINT"
     exit 1
