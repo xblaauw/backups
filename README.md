@@ -87,12 +87,8 @@ If you prefer to follow written guides instead:
 
 **Choose your task:**
 
-#### I'm Setting Up My Own External HDD
+#### I'm Setting Up an External HDD Mount
 - Read: `disk-mounting/setup-admin.md`
-- Test after setup: `disk-mounting/user-access-test.md`
-
-#### I'm Setting Up Someone Else's Disk
-- Read: `disk-mounting/setup-for-user.md`
 
 #### I Want Automated Health Monitoring
 - Read: `smart-monitoring/setup.md`
@@ -104,9 +100,8 @@ If you prefer to follow written guides instead:
 
 | File | Purpose |
 |------|---------|
-| `disk-mounting/setup-admin.md` | Admin: set up your own disk mount |
-| `disk-mounting/setup-for-user.md` | Admin: set up a disk for another user |
-| `disk-mounting/user-access-test.md` | User: verify disk is accessible after setup |
+| `disk-mounting/setup-admin.md` | Full disk mount setup guide |
+| `disk-mounting/fix-automount.sh` | Add udev reconnect resilience to an existing mount |
 
 ### SMART Monitoring
 
@@ -129,9 +124,17 @@ If you prefer to follow written guides instead:
    - Run: `bash smart-monitoring/scripts/register.sh`
    - Test: `bash smart-monitoring/scripts/check.sh`
 
-3. **User tests access** (after admin setup)
-   - User reads: `disk-mounting/user-access-test.md`
-   - Verify disk is accessible before running backups
+## Fixing an Existing Setup
+
+### Automount unit dies after disk disconnection
+
+If unplugging the disk causes the automount unit to go `inactive (dead)` and it doesn't recover on reconnect, run:
+
+```bash
+bash disk-mounting/fix-automount.sh /media/<target-user>
+```
+
+This adds a udev rule that restarts the automount unit whenever the disk is plugged back in. See `disk-mounting/setup-admin.md` Step 9 for details.
 
 ## Key Concepts
 
@@ -203,7 +206,7 @@ findmnt /media/<target-user>
 
 - Disk not mounting? → See `disk-mounting/setup-admin.md` (Troubleshooting section)
 - Emails not arriving? → See `smart-monitoring/troubleshooting.md`
-- Can't access disk as user? → See `disk-mounting/user-access-test.md`
+- Can't access disk as user? → See `disk-mounting/setup-admin.md` (Verify section)
 
 ## Security Notes
 

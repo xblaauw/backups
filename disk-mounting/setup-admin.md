@@ -172,7 +172,34 @@ Without this, access might not trigger the automount correctly.
 
 ---
 
-## Step 9: Verify the Setup
+## Step 9: Add Reconnect Resilience (udev Rule)
+
+The systemd automount unit handles lazy mounting but does not survive a physical disconnection — when the disk is unplugged, the unit enters `inactive (dead)` state and will not recover on its own when the disk is reconnected. A udev rule fixes this by restarting the unit automatically whenever the disk is plugged back in.
+
+Run the included script (requires sudo):
+
+```bash
+bash disk-mounting/fix-automount.sh /media/<target-user>
+```
+
+Replace `<target-user>` with the target user's actual username.
+
+What it does:
+- Reads the UUID from `/etc/fstab` (no manual copy-paste needed)
+- Creates `/etc/udev/rules.d/99-automount-media-<target-user>.rules`
+- Reloads udev rules
+- Restarts the automount unit immediately
+
+**To verify the rule was created:**
+```bash
+cat /etc/udev/rules.d/99-automount-media-<target-user>.rules
+```
+
+Replace `<target-user>` with the target user's actual username.
+
+---
+
+## Step 10: Verify the Setup
 
 Run these tests to confirm everything works:
 
@@ -325,7 +352,7 @@ This setup handles:
 | Sudden disconnect mid-write | ext4 journal handles recovery on next mount |
 | Power outage during write | ext4 journal + `errors=remount-ro` protects integrity |
 | Kernel update / reboot | UUID + fstab entries persist unchanged |
-| Intermittent USB connection | Each reconnect is detected; automount re-triggers |
+| Intermittent USB connection | Requires udev rule (Step 9) — without it, the automount unit dies on disconnect and needs a manual `systemctl restart` |
 | Accidental writes if disk missing | Read-only bare mount point (mode 500) prevents this |
 
 ---
